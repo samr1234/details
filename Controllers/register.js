@@ -3,43 +3,36 @@ const ExcelJS = require('exceljs');
 
 const register = require('../Database/register')
 
-const studentRegister = async(req,res,next)=>{
+const studentRegister = async (req, res, next) => {
+    try {
+        const { name, email, contact, degree, branch, passingYear, collegeName } = req.body;
 
-    try{
+        if (!name || !email || !contact || !degree || !branch || !passingYear || !collegeName) {
+            return res.status(400).json({ error: "Please fill in all the fields" });
+        }
 
- 
+        if (name.length < 3) {
+            return res.status(400).json({ error: "Name should be at least 3 characters long" });
+        }
 
-    const {name,email,contact,degree,branch,passingYear,collegeName} = req.body;
+        const existingUser = await register.findOne({ email: email });
 
-    if(!name || !email || !contact || !degree || !branch || !passingYear || !collegeName){
+        if (existingUser) {
+            return res.status(409).json({ error: "User already exists with this email" });
+        }
 
-        return res.send({ error: "please add all the fields" })
+        const student = new register({
+            name, email, contact, degree, branch, passingYear, collegeName
+        });
+
+        await student.save();
+
+        res.status(201).json(student);
+    } catch (error) {
+        res.status(500).json({ error: "User already exists with this email" });
     }
+};
 
-    if (name < 3) {
-
-        return res.send({ error: "name should be atleast 3 characters long" })
-    }
-
-    let data =  await register.findOne({email:email})
-
-    if(data){
-        return res.send("user already exists")
-    }
-
-    const student = new register({
-        name,email,contact,degree,branch,passingYear,collegeName
-    })
-
-    await student.save();
-
-    res.status(201).json(student);
-
-}
-catch(error){
-    res.status(400).json({ error: error.message });
-}
-}
 
 const getStudentData = async(req,res,next)=>{
 
